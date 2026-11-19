@@ -43,8 +43,8 @@
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.astral.antigravity.refresh</string>
-		<string>com.astral.antigravity.sync</string>
+		<string>com.astral.antigravity.app.refresh</string>
+		<string>com.astral.antigravity.app.sync</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>يستخدم Astral الكاميرا لمسح رمز QR والاقتران السريع بجهازك الذي يشغّل Google Antigravity.</string>

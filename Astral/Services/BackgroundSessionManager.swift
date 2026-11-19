@@ -6,8 +6,10 @@ import UserNotifications
 final class BackgroundSessionManager {
     static let shared = BackgroundSessionManager()
 
-    private let refreshTaskId = "com.astral.antigravity.refresh"
-    private let processingTaskId = "com.astral.antigravity.sync"
+    // Must be prefixed with the app's bundle ID (com.astral.antigravity.app)
+    // or iOS terminates the app at launch when registering with BGTaskScheduler.
+    private let refreshTaskId = "com.astral.antigravity.app.refresh"
+    private let processingTaskId = "com.astral.antigravity.app.sync"
     private var bgTaskId: UIBackgroundTaskIdentifier = .invalid
 
     private init() {}

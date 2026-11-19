@@ -8,9 +8,21 @@ on:
 jobs:
   build-ipa:
     runs-on: macos-15
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        shell: bash
+        run: |
+          set -e
+          ls /Applications/ | grep -i xcode
+          SELECTED=$(ls /Applications/ | grep -i '^Xcode' | sort -V | tail -1)
+          echo "Using $SELECTED"
+          sudo xcode-select -s "/Applications/$SELECTED.app" || true
+          xcodebuild -version
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -18,13 +30,13 @@ jobs:
       - name: Generate Astral.xcodeproj
         run: xcodegen generate
 
-      - name: Build Unsigned Archive
+      - name: Build Unsigned IPA (Release, all arm64 sim+device slices not needed)
         run: |
           xcodebuild \
             -project Astral.xcodeproj \
             -scheme Astral \
             -configuration Release \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -44,3 +56,18 @@ jobs:
         with:
           name: Astral-Unsigned-IPA
           path: Astral-Unsigned.ipa
+
+      - name: Release IPA to GitHub Releases
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Astral Build ${{ github.run_number }}
+          body: |
+            Astral — بيئة تطوير iOS مجانية لـ Google Antigravity
+
+            IPA غير موقّع — يوقَّع ويُثبَّت عبر ESign / Feather / AltStore / SideStore / TrollStore.
+            Unsigned IPA — sign & install via ESign / Feather / AltStore / SideStore / TrollStore.
+          files: Astral-Unsigned.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

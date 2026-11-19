@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { WebSocketServer, WebSocket } from "ws";
-import { spawn, execSync } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import os from "node:os";
 import fs from "node:fs";
@@ -47,35 +47,34 @@ function listWorkspaceFiles(dir: string, depth = 0): any[] {
   return results.slice(0, 120);
 }
 
-function getGitDiffs(): any[] {
+function git(args: string[]): string {
   try {
-    const raw = execSync("git diff --numstat", { cwd: WORKSPACE, encoding: "utf8" }).trim();
-    if (!raw) return [];
-    return raw.split("\n").map((line) => {
-      const [add, del, filePath] = line.split("\t");
-      let patch = "";
-      try {
-        patch = execSync(`git diff -- "${filePath}"`, { cwd: WORKSPACE, encoding: "utf8" }).slice(0, 8000);
-      } catch {}
-      return {
-        id: filePath,
-        filePath,
-        additions: Number(add) || 0,
-        deletions: Number(del) || 0,
-        patch,
-      };
-    });
+    return execFileSync("git", args, { cwd: WORKSPACE, encoding: "utf8" });
   } catch {
-    return [];
+    return "";
   }
 }
 
+function getGitDiffs(): any[] {
+  const raw = git(["diff", "--numstat"]).trim();
+  if (!raw) return [];
+  return raw.split("\n").map((line) => {
+    const [add, del, ...rest] = line.split("\t");
+    const filePath = rest.join("\t");
+    const patch = git(["diff", "--", filePath]).slice(0, 8000);
+    return {
+      id: filePath,
+      filePath,
+      additions: Number(add) || 0,
+      deletions: Number(del) || 0,
+      patch,
+    };
+  });
+}
+
 function getGitBranch(): string {
-  try {
-    return execSync("git rev-parse --abbrev-ref HEAD", { cwd: WORKSPACE, encoding: "utf8" }).trim();
-  } catch {
-    return "main";
-  }
+  const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]).trim();
+  return branch || "main";
 }
 
 const wss = new WebSocketServer({ port: PORT });
@@ -89,6 +88,33 @@ wss.on("connection", (ws: WebSocket, req) => {
 
   const send = (payload: Record<string, unknown>) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload));
+  };
+
+  const pipeAgent = (child: ReturnType<typeof spawn>) => {
+    let progress = 0.25;
+    const onChunk = (d: Buffer) => {
+      progress = Math.min(0.92, progress + 0.08);
+      send({
+        type: "agent.chunk",
+        chunk: d.toString(),
+        step: "Antigravity ينفّذ المهمة...",
+        progress,
+      });
+    };
+    if (child.stdout) child.stdout.on("data", onChunk);
+    if (child.stderr) child.stderr.on("data", (d: Buffer) => send({ type: "terminal.output", line: d.toString(), isError: true }));
+    child.on("error", (err) => {
+      send({ type: "terminal.output", line: `CLI error: ${err.message}`, isError: true });
+      send({ type: "agent.done", summary: "تعذر تشغيل Antigravity/Gemini CLI على جهازك", changedFiles: [] });
+    });
+    child.on("close", () => {
+      const diffs = getGitDiffs();
+      send({
+        type: "agent.done",
+        summary: `اكتملت مهمة Antigravity (${diffs.length} ملفات معدّلة)`,
+        changedFiles: diffs.map((d) => d.filePath),
+      });
+    });
   };
 
   send({ type: "hello", hostName: HOST_NAME, workspace: WORKSPACE });
@@ -131,13 +157,18 @@ wss.on("connection", (ws: WebSocket, req) => {
 
       case "git.action": {
         try {
-          if (msg.action === "undo") execSync("git checkout -- .", { cwd: WORKSPACE });
+          if (msg.action === "undo") execFileSync("git", ["checkout", "--", "."], { cwd: WORKSPACE });
           if (msg.action === "commit") {
-            execSync("git add -A", { cwd: WORKSPACE });
-            execSync(`git commit -m "${String(msg.message || "Astral Antigravity update").replace(/"/g, "'")}"`, { cwd: WORKSPACE });
+            execFileSync("git", ["add", "-A"], { cwd: WORKSPACE });
+            const message = String(msg.message || "Astral Antigravity update").slice(0, 500);
+            execFileSync("git", ["commit", "-m", message], { cwd: WORKSPACE });
           }
-          if (msg.action === "push") execSync("git push", { cwd: WORKSPACE });
-          if (msg.action === "open_pr") execSync("gh pr create --fill || true", { cwd: WORKSPACE });
+          if (msg.action === "push") execFileSync("git", ["push"], { cwd: WORKSPACE });
+          if (msg.action === "open_pr") {
+            try {
+              execFileSync("gh", ["pr", "create", "--fill"], { cwd: WORKSPACE });
+            } catch {}
+          }
           send({ type: "terminal.output", line: `✓ Git action '${msg.action}' completed`, isError: false });
           send({ type: "git.diffs", diffs: getGitDiffs() });
         } catch (err: any) {
@@ -160,30 +191,13 @@ wss.on("connection", (ws: WebSocket, req) => {
         // Prefer Google Antigravity CLI if installed, otherwise fall back to Gemini CLI
         const promptText = String(msg.prompt || "");
         const binary = process.env.ASTRAL_CLI_BIN || "antigravity";
-        const fallbackCmd = `which ${binary} >/dev/null 2>&1 && ${binary} chat --non-interactive ${JSON.stringify(promptText)} || gemini -p ${JSON.stringify(promptText)}`;
-        const child = spawn(fallbackCmd, { cwd: WORKSPACE, shell: true });
-
-        let progress = 0.25;
-        child.stdout.on("data", (d) => {
-          progress = Math.min(0.92, progress + 0.08);
-          send({
-            type: "agent.chunk",
-            chunk: d.toString(),
-            step: "Antigravity ينفّذ المهمة...",
-            progress,
-          });
+        const child = spawn(binary, ["chat", "--non-interactive", promptText], { cwd: WORKSPACE, shell: false });
+        child.on("error", () => {
+          // antigravity CLI not installed — fall back to Gemini CLI without a shell
+          const gemini = spawn("gemini", ["-p", promptText], { cwd: WORKSPACE, shell: false });
+          pipeAgent(gemini);
         });
-        child.stderr.on("data", (d) => {
-          send({ type: "terminal.output", line: d.toString(), isError: true });
-        });
-        child.on("close", () => {
-          const diffs = getGitDiffs();
-          send({
-            type: "agent.done",
-            summary: `اكتملت مهمة Antigravity (${diffs.length} ملفات معدّلة)`,
-            changedFiles: diffs.map((d) => d.filePath),
-          });
-        });
+        if (child.stdout) pipeAgent(child);
         break;
       }
     }
