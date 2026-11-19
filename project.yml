@@ -1,0 +1,44 @@
+name: Astral
+options:
+  bundleIdPrefix: com.astral.antigravity
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Astral:
+    type: application
+    platform: iOS
+    sources:
+      - path: Astral
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astral.antigravity.app
+        INFOPLIST_FILE: Astral/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Astral/Astral.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: AstralWidgetExtension
+        embed: true
+
+  AstralWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: AstralWidgetExtension
+      - path: Astral/Models/AstralActivityAttributes.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astral.antigravity.app.widget
+        INFOPLIST_FILE: AstralWidgetExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AstralWidgetExtension/AstralWidgetExtension.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES

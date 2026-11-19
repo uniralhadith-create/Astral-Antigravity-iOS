@@ -1,0 +1,21 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+Astral.xcodeproj/
+
+# xcodegen output
+*.xcodeproj
+
+# Node / astral-connector
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Build artifacts
+*.ipa
+Payload/
+.DS_Store

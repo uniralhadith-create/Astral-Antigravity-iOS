@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>ar</string>
+	<key>CFBundleDisplayName</key>
+	<string>Astral</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Astral</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.astral.antigravity.pair</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>astral</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>remote-notification</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.astral.antigravity.refresh</string>
+		<string>com.astral.antigravity.sync</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>يستخدم Astral الكاميرا لمسح رمز QR والاقتران السريع بجهازك الذي يشغّل Google Antigravity.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يستخدم Astral الميكروفون لإملاء الأوامر البرمجية صوتياً للوكيل.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>يستخدم Astral التعرف على الصوت لتحويل أوامرك البرمجية إلى نص.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>يحتاج Astral للوصول إلى الشبكة المحلية للاتصال المباشر بجسر astral-connector على جهازك.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string></string>
+	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>

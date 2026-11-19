@@ -1,0 +1,23 @@
+{
+  "name": "astral-connector",
+  "version": "1.6.0",
+  "description": "Free open-source local bridge connecting Astral iOS App directly to Google Antigravity Desktop & CLI.",
+  "type": "module",
+  "bin": {
+    "astral-connector": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "qrcode-terminal": "^0.12.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
